@@ -23,10 +23,10 @@ jobs:
           with:
             branch: main
             tag_prefix: "v"
-            major_pattern: "/BREAKING CHANGE:|\x{1F4A5}/"
-            major_regexp_flags: "su"
-            minor_pattern: "/feat:|\x{2728}/"
-            minor_regexp_flags: "su"
+            major_pattern: "/BREAKING CHANGE:|💥/"
+            major_regexp_flags: "s"
+            minor_pattern: "/feat:|✨/"
+            minor_regexp_flags: "s"
             format: "${major}.${minor}.{patch}-prerelease${increment}"
         - name: Bump version in manifest.json
           uses: jossef/action-set-json-field@v2
