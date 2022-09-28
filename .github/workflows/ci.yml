@@ -28,7 +28,7 @@ jobs:
                 additionalArguments: '/showConfig'
                 useConfigFile: true
                 updateAssemblyInfo: true
-                updateAssemblyInfoFilename: src/Properties/AssemblyVersionInfo.cs
+                updateAssemblyInfoFilename: src/Properties/AssemblyInfo.cs
                 
             - name: Bump version in manifest.json
               uses: jossef/action-set-json-field@v2
