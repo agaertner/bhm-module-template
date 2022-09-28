@@ -33,11 +33,6 @@ jobs:
                 useConfigFile: true
                 updateAssemblyInfo: true
                 updateAssemblyInfoFilename: src/Properties/AssemblyInfo.cs
-                
-            - name: Display GitVersion outputs
-              run: |
-                echo "CommitDate: ${{ steps.gitversion.outputs.commitDate }}"
-                echo "FullSemVer: ${{ steps.gitversion.outputs.fullSemVer }}"
 
             - name: Bump version in manifest.json
               uses: jossef/action-set-json-field@v2
