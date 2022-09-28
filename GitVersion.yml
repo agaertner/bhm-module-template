@@ -1,4 +1,5 @@
-assembly-versioning-scheme: MajorMinorPatch
+assembly-versioning-scheme: MajorMinorPatchTag
+assembly-file-versioning-scheme: MajorMinorPatchTag
 mode: ContinuousDeployment
 major-version-bump-message: 'BREAKING\sCHANGE:|💥'
 minor-version-bump-message: 'feat:|✨'

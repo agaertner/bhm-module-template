@@ -36,11 +36,9 @@ jobs:
                 
             - name: Display GitVersion outputs
               run: |
-                echo "WeightedPreReleaseNumber: ${{ steps.gitversion.outputs.weightedPreReleaseNumber }}"
-                echo "MajorMinorPatch: ${{ steps.gitversion.outputs.majorMinorPatch }}"
-                echo "FullSemVer: ${{ steps.gitversion.outputs.fullSemVer }}"
                 echo "CommitDate: ${{ steps.gitversion.outputs.commitDate }}"
-      
+                echo "FullSemVer: ${{ steps.gitversion.outputs.fullSemVer }}"
+
             - name: Bump version in manifest.json
               uses: jossef/action-set-json-field@v2
               with:
