@@ -7,6 +7,9 @@ on:
     tags-ignore:
       - v*
       
+env:
+  GITHUB_TOKEN: ${{ github.token }}
+  
 jobs:
     nightly:
         name: Nightly
@@ -34,3 +37,15 @@ jobs:
                 file: src/manifest.json
                 field: version
                 value: ${{ steps.versioning.outputs.version }}
+            - name: Commit manifest.json
+              run: |
+                git config --local user.email "action@github.com"
+                git config --local user.name "GitHub Action"
+                git add -A
+                git commit -m "docs(): bumping version to ${{ steps.versioning.outputs.version }}"
+                
+            - name: Push changes to manifest.json
+              uses: ad-m/github-push-action@v0.6.0
+              with:
+                github_token: ${{ github.token }}
+                tags: true
