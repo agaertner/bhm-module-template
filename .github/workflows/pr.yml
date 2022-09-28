@@ -1,0 +1,64 @@
+name: Staging
+
+on: [pull_request]
+
+concurrency:
+  group: test-pr-${{ github.head_ref }}
+  cancel-in-progress: true
+  
+jobs:
+    test-build:
+        name: Build Test Artifact
+        runs-on: windows-latest
+        steps:
+            - name: Install MSBuild Tools
+              uses: microsoft/setup-msbuild@v1.1
+              
+            - name: Install NuGet
+              uses: nuget/setup-nuget@v1
+              with:
+                nuget-api-key: ${{ secrets.NuGetAPIKey }}
+                nuget-version: '5.x'
+
+            - name: Checkout
+              uses: actions/checkout@v3.0.2
+              with:
+                submodules: 'true'
+                fetch-depth: 0
+
+            # 'msbuild restore' does not support NuGet package.config format
+            - name: Run NuGet restore
+              working-directory: ./src
+              run: nuget restore
+            
+            - name: Run msbuild
+              working-directory: ./src
+              run: msbuild -p:Configuration=Release -p:VERSIONED_BUILD=${{ steps.gitversion.outputs.semVer }}
+
+            # Required to find output module BHM without glob pattern.
+            - name: Get module *.csproj name
+              id: csproj
+              working-directory: ./src
+              run: Write-Output "::set-output name=name::$((Get-ChildItem $dir -File '*.csproj').Basename)"
+            
+            # Used as prefix in module BHM naming scheme.
+            - name: Get manifest namespace
+              id: namespace
+              uses: notiz-dev/github-action-json-property@release
+              with: 
+                path: 'src/manifest.json'
+                prop_path: 'namespace'
+                
+            # Used as suffix in module BHM naming scheme.
+            - name: Get manifest version
+              id: version
+              uses: notiz-dev/github-action-json-property@release
+              with:
+                path: 'src/manifest.json'
+                prop_path: 'version'
+                
+            - name: Upload BHM artifact
+              uses: actions/upload-artifact@v3.1.0
+              with:
+                name: '${{ steps.namespace.outputs.prop }}-${{ steps.version.outputs.prop }}-pr.${{ github.event.number }}.bhm'
+                path: src/bin/Release/${{ steps.csproj.outputs.name }}.bhm
