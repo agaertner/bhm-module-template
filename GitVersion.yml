@@ -1,9 +1,9 @@
 assembly-versioning-scheme: MajorMinorPatchTag
 assembly-file-versioning-scheme: MajorMinorPatchTag
 mode: ContinuousDeployment
-major-version-bump-message: 'BREAKING\sCHANGE:|💥'
-minor-version-bump-message: 'feat:|✨'
-patch-version-bump-message: '.'
+major-version-bump-message: '\+semver:\s?(breaking|major)|BREAKING\sCHANGE:|💥'
+minor-version-bump-message: '\+semver:\s?(feature|minor)|feat:|add|✨|🌟|🎉'
+patch-version-bump-message: '\+semver:\s?(fix|patch)|fix:?|patch:|🐛|🚑️|🔒️'
 branches:
   main:
     regex: ^master$|^main$
