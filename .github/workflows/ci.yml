@@ -42,8 +42,7 @@ jobs:
                 git config --local user.email "action@github.com"
                 git config --local user.name "GitHub Action"
                 git add -A
-                git commit -m "docs(): bumping version to ${{ steps.versioning.outputs.version }}"
-                
+                git commit -m "🔖 bump version to ${{ steps.versioning.outputs.version }}"
             - name: Push changes to manifest.json
               uses: ad-m/github-push-action@v0.6.0
               with:
