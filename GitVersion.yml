@@ -1,17 +1,17 @@
-assembly-versioning-scheme: MajorMinorPatchTag
-assembly-file-versioning-scheme: MajorMinorPatchTag
+assembly-versioning-scheme: MajorMinorPatch
+assembly-file-versioning-scheme: MajorMinorPatch
 mode: ContinuousDeployment
-commit-message-incrementing: Enabled
 major-version-bump-message: '\+semver:\s?(breaking|major)|BREAKING\sCHANGE:|💥'
 minor-version-bump-message: '\+semver:\s?(feature|minor)|feat:|add|✨|🌟|🎉'
 patch-version-bump-message: '\+semver:\s?(fix|patch)|revert|fix:?|patch:|🐛|🪲|🐜|🩹|🚑️|🔒️'
 branches:
   main:
     regex: ^master$|^main$
+    mode: ContinuousDeployment
     increment: Patch
     prevent-increment-of-merged-branch-version: true
     track-merge-target: false
     tracks-release-branches: false
-    is-release-branch: true
+    is-release-branch: false
   develop:
     regex: noop
