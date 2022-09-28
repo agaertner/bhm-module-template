@@ -20,38 +20,38 @@ jobs:
               with:
                 submodules: 'false'
                 fetch-depth: 0
-            - name: Git Semantic Version
+ 
+            - name: Bump version in AssemblyVersionInfo.cs
               id: versioning
-              uses: PaulHatch/semantic-version@v5.0.0-alpha2
+              uses: GitTools/actions@v0.9.13
               with:
-                branch: main
-                tag_prefix: "v"
-                major_pattern: "/BREAKING CHANGE:|💥/"
-                major_regexp_flags: "s"
-                minor_pattern: "/feat:|✨/"
-                minor_regexp_flags: "s"
-                format: "${major}.${minor}.${patch}-prerelease${increment}"
+                updateAssemblyInfo: true
+                updateAssemblyInfoFilename: src/Properties/AssemblyVersionInfo.cs
+                
             - name: Bump version in manifest.json
               uses: jossef/action-set-json-field@v2
               with:
                 file: src/manifest.json
                 field: version
-                value: ${{ steps.versioning.outputs.version }}
-            - name: Commit manifest.json
+                value: ${{ steps.versioning.outputs.fullSemVer }}
+
+            - name: Commit changes
               run: |
                 git config --local user.email "action@github.com"
                 git config --local user.name "GitHub Action"
                 git add -A
-                git commit -m "🔖 bump version to ${{ steps.versioning.outputs.version }}"
+                git commit -m "🔖 bump version to ${{ steps.versioning.outputs.fullSemVer }}"
+                
             - name: Push changes to manifest.json
               uses: ad-m/github-push-action@v0.6.0
               with:
                 github_token: ${{ github.token }}
                 branch: ${{ github.ref }}
-                tags: ${{ env.REPO }}:latest,${{ env.REPO }}:v${{ steps.versioning.outputs.version }}
+                tags: ${{ env.REPO }}:latest,${{ env.REPO }}:v${{ steps.versioning.outputs.fullSemVer }}
+                
             - name: Create Release
               if: ${{ !startsWith(github.ref, 'refs/tags/') }}
               uses: ncipollo/release-action@v1.10.0
               with:
-                tag: v${{ steps.versioning.outputs.version }}
+                tag: v${{ steps.versioning.outputs.fullSemVer }}
                 prerelease: true
