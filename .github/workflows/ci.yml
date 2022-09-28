@@ -50,7 +50,9 @@ jobs:
                 branch: ${{ github.ref }}
                 tags: ${{ env.REPO }}:latest,${{ env.REPO }}:v${{ steps.versioning.outputs.version }}
                 
+            - run: echo "github.ref: ${{ github.ref }} "
             - name: Create Release
+
               if: ${{ !startsWith(github.ref, 'refs/tags/') }}
               uses: ncipollo/release-action@v1.10.0
               with:
