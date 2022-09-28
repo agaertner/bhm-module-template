@@ -18,7 +18,7 @@ jobs:
             - name: Checkout
               uses: actions/checkout@v3.0.2
               with:
-                submodules: 'true'
+                submodules: 'false'
                 fetch-depth: 0
             - name: Git Semantic Version
               id: versioning
@@ -48,4 +48,5 @@ jobs:
               uses: ad-m/github-push-action@v0.6.0
               with:
                 github_token: ${{ github.token }}
+                branch: ${{ github.ref }}
                 tags: true
