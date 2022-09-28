@@ -8,7 +8,7 @@ patch-version-bump-message: '\+semver:\s?(fix|patch)|fix:?|patch:|🐛|🪲|🐜
 branches:
   main:
     regex: ^master$|^main$
-    mode: Mainline
+    mode: ContinuousDeployment
     prevent-increment-of-merged-branch-version: true
     track-merge-target: false
     tracks-release-branches: false
