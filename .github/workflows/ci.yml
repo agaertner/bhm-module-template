@@ -23,8 +23,10 @@ jobs:
  
             - name: Bump version in AssemblyVersionInfo.cs
               id: versioning
-              uses: GitTools/actions@v0.9.13
+              uses: gittools/actions/gitversion/execute@v0.9.7
               with:
+                additionalArguments: '/showConfig'
+                useConfigFile: true
                 updateAssemblyInfo: true
                 updateAssemblyInfoFilename: src/Properties/AssemblyVersionInfo.cs
                 
