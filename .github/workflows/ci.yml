@@ -27,7 +27,7 @@ jobs:
             major_regexp_flags: "s"
             minor_pattern: "/feat:|✨/"
             minor_regexp_flags: "s"
-            format: "${major}.${minor}.{patch}-prerelease${increment}"
+            format: "${major}.${minor}.${patch}-prerelease${increment}"
         - name: Bump version in manifest.json
           uses: jossef/action-set-json-field@v2
           with:
