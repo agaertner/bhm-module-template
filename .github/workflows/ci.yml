@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - '**'
+    tags-ignore:
+      - v*
+
+jobs:
+    nightly:
+    name: Nightly
+    runs-on: windows-latest
+    steps:
+        - name: Checkout
+          uses: actions/checkout@v3.0.2
+          with:
+            submodules: 'true'
+            fetch-depth: 0
+        - name: Git Semantic Version
+          id: versioning
+          uses: PaulHatch/semantic-version@v5.0.0-alpha2
+          with:
+            branch: main
+            tag_prefix: "v"
+            major_pattern: "/BREAKING CHANGE:|\x{1F4A5}/"
+            major_regexp_flags: "su"
+            minor_pattern: "/feat:|\x{2728}/"
+            minor_regexp_flags: "su"
+            format: "${major}.${minor}.{patch}-prerelease${increment}"
+        - name: Bump version in manifest.json
+          uses: jossef/action-set-json-field@v2
+          with:
+            file: manifest.json
+            field: version
+            value: ${{ steps.versioning.outputs.version }}
