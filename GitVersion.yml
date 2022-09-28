@@ -12,13 +12,4 @@ branches:
     prevent-increment-of-merged-branch-version: true
     track-merge-target: false
     tracks-release-branches: false
-    is-release-branch: false
-  release:
-    tag: rc
-    tracks-release-branches: false
-    is-release-branch: true    
-  develop:
-    tag: beta
-    increment: Minor
-    tracks-release-branches: true
-    is-release-branch: false
+    is-release-branch: true
