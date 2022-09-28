@@ -46,7 +46,7 @@ jobs:
               with:
                 file: src/manifest.json
                 field: version
-                value: ${{ steps.gitversion.outputs.fullSemVer }}
+                value: ${{ steps.gitversion.outputs.majorMinorPatch }}
 
             - name: Commit changes
               run: |
@@ -55,7 +55,7 @@ jobs:
                 git add -A
                 git commit -m "🔖 bump version to ${{ steps.gitversion.outputs.fullSemVer }}"
                 
-            - name: Push changes to manifest.json
+            - name: Push changes
               uses: ad-m/github-push-action@v0.6.0
               with:
                 github_token: ${{ github.token }}
