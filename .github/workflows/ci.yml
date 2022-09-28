@@ -52,8 +52,7 @@ jobs:
                 
             - name: Create Release
               if: ${{ !startsWith(github.ref, 'refs/tags/') }}
-              uses: actions/create-release@1
+              uses: ncipollo/release-action@v1.10.0
               with:
-                tag_name: v${{ steps.versioning.outputs.version }}
-                release_name: v${{ steps.versioning.outputs.version }}
+                tag: v${{ steps.versioning.outputs.version }}
                 prerelease: true
