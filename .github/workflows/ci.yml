@@ -70,11 +70,6 @@ jobs:
               with: 
                 path: 'src/manifest.json'
                 prop_path: 'namespace'
-                  
-            - name: Get module *.csproj name
-              id: csproj
-              working-directory: ./src
-              run: Write-Output "::set-output name=name::$((Get-ChildItem $dir -File '*.csproj').Basename)"
                 
             # 'msbuild restore' does not support NuGet package.config format
             - name: Run NuGet restore
@@ -85,6 +80,16 @@ jobs:
               working-directory: ./src
               run: msbuild -p:Configuration=Release -p:VERSIONED_BUILD=${{ steps.gitversion.outputs.semVer }}
             
+            - name: Get module *.csproj name
+              id: csproj
+              working-directory: ./src
+              run: Write-Output "::set-output name=name::$((Get-ChildItem $dir -File '*.csproj').Basename)"
+              
+            - name: Draft Release Changes
+              id: release-drafter
+              tag-template: v${{ steps.gitversion.outputs.fullSemVer }}
+              uses: release-drafter/release-drafter@v5.21.0
+              
             - name: Upload BHM to GitHub release
               if: ${{ !startsWith(github.ref, 'refs/tags/') }}
               uses: svenstaro/upload-release-action@2.3.0
@@ -97,4 +102,4 @@ jobs:
                 tag: v${{ steps.gitversion.outputs.fullSemVer }}
                 asset_name: '${{ steps.namespace.outputs.prop }}-${{ steps.gitversion.outputs.majorMinorPatch }}.bhm'
                 prerelease: true
-                body: ""
+                body: ${{ steps.release-drafter.outputs.body }}
