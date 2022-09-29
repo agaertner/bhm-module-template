@@ -79,12 +79,6 @@ jobs:
             - name: Run msbuild
               working-directory: ./src
               run: msbuild -p:Configuration=Release -p:VERSIONED_BUILD=${{ steps.gitversion.outputs.semVer }}
-              
-            - name: Draft Release Changes
-              id: release-drafter
-              uses: release-drafter/release-drafter@v5.21.0
-              with:
-                tag-template: v${{ steps.gitversion.outputs.fullSemVer }}
 
             # Required to find output module BHM without glob pattern.
             - name: Get module *.csproj name
@@ -105,4 +99,4 @@ jobs:
                 tag: v${{ steps.gitversion.outputs.fullSemVer }}
                 asset_name: '${{ steps.namespace.outputs.prop }}-${{ steps.gitversion.outputs.majorMinorPatch }}.bhm'
                 prerelease: true
-                body: ${{ steps.release-drafter.outputs.body }}
+                body: ""
