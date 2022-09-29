@@ -75,7 +75,7 @@ jobs:
               id: csproj
               working-directory: ./src
               run: | 
-                $name = Get-ChildItem $dir -File '*.csproj'
+                $name = (Get-ChildItem $dir -File '*.csproj').Basename
                 echo '::set-output name=name::$name'
                 
             # 'msbuild restore' does not support NuGet package.config format
