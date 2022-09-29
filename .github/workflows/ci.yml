@@ -63,13 +63,6 @@ jobs:
                 github_token: ${{ github.token }}
                 branch: ${{ github.ref }}
                 tags: ${{ env.REPO }}:latest,${{ env.REPO }}:v${{ steps.gitversion.outputs.fullSemVer }}
-
-            - name: Get manifest namespace
-              id: namespace
-              uses: notiz-dev/github-action-json-property@release
-              with: 
-                path: 'src/manifest.json'
-                prop_path: 'namespace'
                 
             # 'msbuild restore' does not support NuGet package.config format
             - name: Run NuGet restore
@@ -85,18 +78,27 @@ jobs:
               id: csproj
               working-directory: ./src
               run: Write-Output "::set-output name=name::$((Get-ChildItem $dir -File '*.csproj').Basename)"
-              
+            
+            # Used as prefix in module BHM naming scheme.
+            - name: Get manifest namespace
+              id: namespace
+              uses: notiz-dev/github-action-json-property@release
+              with: 
+                path: 'src/manifest.json'
+                prop_path: 'namespace'
+                
             - name: Upload BHM to GitHub release
               if: ${{ !startsWith(github.ref, 'refs/tags/') }}
               uses: svenstaro/upload-release-action@2.3.0
               with:
                 repo_token: ${{ github.token }}
-                # Using glob pattern disables 'asset_name' renaming.
-                # We use *.csproj name from previous job to find *.bhm
+                # Using 'file_glob' disables 'asset_name' renaming.
+                # We use the *.csproj name to workaround this.
                 file_glob: 'false'
                 file: src/bin/Release/${{ steps.csproj.outputs.name }}.bhm
+                # Rename the module BHM to release naming scheme.
+                asset_name: '${{ steps.namespace.outputs.prop }}-${{ steps.gitversion.outputs.majorMinorPatch }}.bhm'
                 overwrite: true
                 tag: v${{ steps.gitversion.outputs.fullSemVer }}
-                asset_name: '${{ steps.namespace.outputs.prop }}-${{ steps.gitversion.outputs.majorMinorPatch }}.bhm'
                 prerelease: true
                 body: ""
