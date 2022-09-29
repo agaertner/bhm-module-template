@@ -1,6 +1,6 @@
 {
   "name": "TemplateModule",
-  "version": "3.1.9",
+  "version": "3.1.11",
   "namespace": "Nekres.TemplateModule",
   "package": "TemplateModule.dll",
   "manifest_version": 1,
