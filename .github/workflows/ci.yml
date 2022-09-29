@@ -71,6 +71,11 @@ jobs:
                 path: 'src/manifest.json'
                 prop_path: 'namespace'
                   
+            - name: Get csproj name
+              id: csprojname
+              working-directory: ./src
+              run: for %f  in ("*.csproj") do @echo '::set-output name=SELECTED_COLOR::%~nf' && goto :eof
+              
             - name: Run NuGet restore
               working-directory: ./src
               run: nuget restore
