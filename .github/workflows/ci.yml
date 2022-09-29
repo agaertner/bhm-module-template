@@ -74,6 +74,7 @@ jobs:
             - name: Get csproj name
               id: csproj
               working-directory: ./src
+              shell: cmd
               run: |
                 for %f  in ("*.csproj") do @echo '::set-output name=name::%~nf' && goto :eof
               
@@ -90,8 +91,8 @@ jobs:
               uses: svenstaro/upload-release-action@2.3.0
               with:
                 repo_token: ${{ github.token }}
-                file_glob: 'true'
-                file: src/bin/Release/*.bhm
+                file_glob: 'false'
+                file: src/bin/Release/${{ steps.csproj.outputs.name }}.bhm
                 overwrite: true
                 tag: v${{ steps.gitversion.outputs.fullSemVer }}
                 asset_name: '${{ steps.namespace.outputs.prop }}-${{ steps.gitversion.outputs.majorMinorPatch }}.bhm'
