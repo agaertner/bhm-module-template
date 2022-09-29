@@ -74,9 +74,11 @@ jobs:
             - name: Get csproj name
               id: csproj
               working-directory: ./src
-              shell: cmd
-              run: for %f  in ("*.csproj") do @echo ::set-output name=name::%~nf && goto :eof
-              
+              run: | 
+                $name = Get-ChildItem $dir -File '*.csproj'
+                echo ::set-output name=name::$name
+                
+            # 'msbuild restore' does not support package.config format
             - name: Run NuGet restore
               working-directory: ./src
               run: nuget restore
@@ -90,6 +92,7 @@ jobs:
               uses: svenstaro/upload-release-action@2.3.0
               with:
                 repo_token: ${{ github.token }}
+                # 'file_glob: true' disables 'asset_name' renaming..
                 file_glob: 'false'
                 file: src/bin/Release/${{ steps.csproj.outputs.name }}.bhm
                 overwrite: true
