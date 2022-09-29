@@ -79,24 +79,26 @@ jobs:
             - name: Run msbuild
               working-directory: ./src
               run: msbuild -p:Configuration=Release -p:VERSIONED_BUILD=${{ steps.gitversion.outputs.semVer }}
-            
-            - name: Get module *.csproj name
-              id: csproj
-              working-directory: ./src
-              run: Write-Output "::set-output name=name::$((Get-ChildItem $dir -File '*.csproj').Basename)"
               
             - name: Draft Release Changes
               id: release-drafter
               uses: release-drafter/release-drafter@v5.21.0
               with:
                 tag-template: v${{ steps.gitversion.outputs.fullSemVer }}
+
+            # Required to find output module BHM without glob pattern.
+            - name: Get module *.csproj name
+              id: csproj
+              working-directory: ./src
+              run: Write-Output "::set-output name=name::$((Get-ChildItem $dir -File '*.csproj').Basename)"
               
             - name: Upload BHM to GitHub release
               if: ${{ !startsWith(github.ref, 'refs/tags/') }}
               uses: svenstaro/upload-release-action@2.3.0
               with:
                 repo_token: ${{ github.token }}
-                # 'file_glob: true' disables 'asset_name' renaming..
+                # Using glob pattern disables 'asset_name' renaming.
+                # We use *.csproj name from previous job to find *.bhm
                 file_glob: 'false'
                 file: src/bin/Release/${{ steps.csproj.outputs.name }}.bhm
                 overwrite: true
