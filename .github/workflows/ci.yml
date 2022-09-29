@@ -57,7 +57,7 @@ jobs:
                 github_token: ${{ github.token }}
                 branch: ${{ github.ref }}
                 tags: ${{ env.REPO }}:latest,${{ env.REPO }}:v${{ steps.gitversion.outputs.fullSemVer }}
-                
+
             - name: Get namespace
               id: namespace
               uses: notiz-dev/github-action-json-property@release
@@ -65,9 +65,9 @@ jobs:
                 path: 'src/manifest.json'
                 prop_path: 'namespace'
                   
-            - name: Run msbuild restore
+            - name: Run NuGet restore
               working-directory: ./src
-              run: msbuild -t:restore
+              run: nuget restore
             
             - name: Run msbuild
               working-directory: ./src
