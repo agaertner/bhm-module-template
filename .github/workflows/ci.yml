@@ -75,8 +75,7 @@ jobs:
               id: csproj
               working-directory: ./src
               shell: cmd
-              run: |
-                for %f  in ("*.csproj") do @echo '::set-output name=name::%~nf' && goto :eof
+              run: for %f  in ("*.csproj") do @echo ::set-output name=name::%~nf && goto :eof
               
             - name: Run NuGet restore
               working-directory: ./src
