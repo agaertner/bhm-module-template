@@ -88,6 +88,6 @@ jobs:
                 file: src/bin/Release/*.bhm
                 overwrite: true
                 tag: v${{ steps.gitversion.outputs.fullSemVer }}
-                asset_name: ${{ steps.namespace.outputs.prop }}-${{ steps.gitversion.outputs.majorMinorPatch }}.bhm
+                asset_name: '${{ steps.namespace.outputs.prop }}-${{ steps.gitversion.outputs.majorMinorPatch }}.bhm'
                 prerelease: true
                 body: ""
