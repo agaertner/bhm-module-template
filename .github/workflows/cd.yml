@@ -1,10 +1,19 @@
-name: PR
+name: CI
 
-on: [pull_request]
-
+on:
+  push:
+    branches:
+      - dev
+    tags-ignore:
+      - v*
+      
+env:
+  GITHUB_TOKEN: ${{ github.token }}
+  
 jobs:
-    build:
-        name: Build
+    nightly:
+        name: Build Release
+        if: ${{ !startsWith(github.ref, 'refs/tags/') }}
         runs-on: windows-latest
         steps:
             - name: Install MSBuild Tools
@@ -44,7 +53,7 @@ jobs:
               with: 
                 path: 'src/manifest.json'
                 prop_path: 'namespace'
-                
+
             # Used as suffix in module BHM naming scheme.
             - name: Get manifest version
               id: version
@@ -53,8 +62,17 @@ jobs:
                 path: 'src/manifest.json'
                 prop_path: 'version'
                 
-            - name: Upload BHM artifact
-              uses: actions/upload-artifact@v3.1.0
+            - name: Upload BHM to GitHub release
+              uses: svenstaro/upload-release-action@2.3.0
               with:
-                name: '${{ steps.namespace.outputs.prop }}-${{ steps.version.outputs.prop }}-pr.${{ github.event.number }}.bhm'
-                path: src/bin/Release/${{ steps.csproj.outputs.name }}.bhm
+                repo_token: ${{ github.token }}
+                # Using 'file_glob' disables 'asset_name' renaming.
+                # We use the *.csproj name to workaround this.
+                file_glob: 'false'
+                file: src/bin/Release/${{ steps.csproj.outputs.name }}.bhm
+                # Rename the module BHM to release naming scheme.
+                asset_name: '${{ steps.namespace.outputs.prop }}-${{ steps.version.outputs.prop }}.bhm'
+                overwrite: true
+                tag: v${{ steps.version.outputs.prop }}
+                prerelease: false
+                body: ""

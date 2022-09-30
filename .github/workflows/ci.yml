@@ -3,7 +3,7 @@ name: CI
 on:
   push:
     branches:
-      - main
+      - dev
     tags-ignore:
       - v*
       
@@ -12,18 +12,9 @@ env:
   
 jobs:
     nightly:
-        name: Nightly
+        name: Version Bump
         runs-on: windows-latest
         steps:
-            - name: Install MSBuild Tools
-              uses: microsoft/setup-msbuild@v1.1
-              
-            - name: Install NuGet
-              uses: nuget/setup-nuget@v1
-              with:
-                nuget-api-key: ${{ secrets.NuGetAPIKey }}
-                nuget-version: '5.x'
-    
             - name: Install GitVersion
               uses: gittools/actions/gitversion/setup@v0.9.7
               with:
@@ -32,7 +23,7 @@ jobs:
             - name: Checkout
               uses: actions/checkout@v3.0.2
               with:
-                submodules: 'true'
+                submodules: 'false'
                 fetch-depth: 0
  
             - name: Bump version in AssemblyInfo.cs
@@ -63,42 +54,3 @@ jobs:
                 github_token: ${{ github.token }}
                 branch: ${{ github.ref }}
                 tags: ${{ env.REPO }}:latest,${{ env.REPO }}:v${{ steps.gitversion.outputs.fullSemVer }}
-                
-            # 'msbuild restore' does not support NuGet package.config format
-            - name: Run NuGet restore
-              working-directory: ./src
-              run: nuget restore
-            
-            - name: Run msbuild
-              working-directory: ./src
-              run: msbuild -p:Configuration=Release -p:VERSIONED_BUILD=${{ steps.gitversion.outputs.semVer }}
-
-            # Required to find output module BHM without glob pattern.
-            - name: Get module *.csproj name
-              id: csproj
-              working-directory: ./src
-              run: Write-Output "::set-output name=name::$((Get-ChildItem $dir -File '*.csproj').Basename)"
-            
-            # Used as prefix in module BHM naming scheme.
-            - name: Get manifest namespace
-              id: namespace
-              uses: notiz-dev/github-action-json-property@release
-              with: 
-                path: 'src/manifest.json'
-                prop_path: 'namespace'
-                
-            - name: Upload BHM to GitHub release
-              if: ${{ !startsWith(github.ref, 'refs/tags/') }}
-              uses: svenstaro/upload-release-action@2.3.0
-              with:
-                repo_token: ${{ github.token }}
-                # Using 'file_glob' disables 'asset_name' renaming.
-                # We use the *.csproj name to workaround this.
-                file_glob: 'false'
-                file: src/bin/Release/${{ steps.csproj.outputs.name }}.bhm
-                # Rename the module BHM to release naming scheme.
-                asset_name: '${{ steps.namespace.outputs.prop }}-${{ steps.gitversion.outputs.majorMinorPatch }}.bhm'
-                overwrite: true
-                tag: v${{ steps.gitversion.outputs.fullSemVer }}
-                prerelease: true
-                body: ""
