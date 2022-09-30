@@ -1,10 +1,14 @@
-name: PR
+name: Staging
 
 on: [pull_request]
 
+concurrency:
+  group: test-pr-${{ github.head_ref }}
+  cancel-in-progress: true
+  
 jobs:
-    build:
-        name: Build
+    test-build:
+        name: Test Build Artifact
         runs-on: windows-latest
         steps:
             - name: Install MSBuild Tools
