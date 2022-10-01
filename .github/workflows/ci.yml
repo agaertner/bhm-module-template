@@ -1,22 +1,25 @@
-name: Development
+name: Integration
 
-on:
+on: 
   push:
-    branches:
+    branches: 
       - dev
+    paths:
+      - 'src/**/*'
     tags-ignore:
       - v*
-      
+
 env:
   GITHUB_TOKEN: ${{ github.token }}
 
 concurrency:
-  group: version-bump
-  cancel-in-progress: false
-  
+  group: versioned-release
+  cancel-in-progress: true
+
 jobs:
-    version-bump:
-        name: Version Bump
+    build-prerelease:
+        name: Bump Version / Build Pre-Release
+        if: ${{ !startsWith(github.ref, 'refs/tags/') }}
         runs-on: windows-latest
         steps:
             - name: Install GitVersion
@@ -24,12 +27,21 @@ jobs:
               with:
                 versionSpec: '5.x'
 
+            - name: Install MSBuild Tools
+              uses: microsoft/setup-msbuild@v1.1
+              
+            - name: Install NuGet
+              uses: nuget/setup-nuget@v1
+              with:
+                nuget-api-key: ${{ secrets.NuGetAPIKey }}
+                nuget-version: '5.x'
+                
             - name: Checkout
               uses: actions/checkout@v3.0.2
               with:
-                submodules: 'false'
+                submodules: 'true'
                 fetch-depth: 0
- 
+
             - name: Bump version in AssemblyInfo.cs
               id: gitversion
               uses: gittools/actions/gitversion/execute@v0.9.7
@@ -43,14 +55,14 @@ jobs:
               with:
                 file: src/manifest.json
                 field: version
-                value: ${{ steps.gitversion.outputs.majorMinorPatch }}
+                value: ${{ steps.gitversion.outputs.fullSemVer }}
 
             - name: Commit version changes
               run: |
                 git config --local user.email "action@github.com"
                 git config --local user.name "GitHub Action"
                 git add -A
-                git commit -m "🔖 bump version to ${{ steps.gitversion.outputs.fullSemVer }}"
+                git commit -m "(skip): 🔖 bump version to ${{ steps.gitversion.outputs.fullSemVer }}"
                 
             - name: Push version changes
               uses: ad-m/github-push-action@v0.6.0
@@ -58,3 +70,50 @@ jobs:
                 github_token: ${{ github.token }}
                 branch: ${{ github.ref }}
                 tags: ${{ env.REPO }}:latest,${{ env.REPO }}:v${{ steps.gitversion.outputs.fullSemVer }}
+                
+            # 'msbuild restore' does not support NuGet package.config format
+            - name: Restore NuGet packages
+              working-directory: ./src
+              run: nuget restore
+            
+            - name: Build Solution
+              working-directory: ./src
+              run: msbuild -p:Configuration=Release -p:VERSIONED_BUILD=${{ steps.gitversion.outputs.semVer }}
+
+            # Required to find output module BHM without glob pattern.
+            - name: Get module *.csproj name
+              id: csproj
+              working-directory: ./src
+              run: Write-Output "::set-output name=name::$((Get-ChildItem $dir -File '*.csproj').Basename)"
+            
+            # Used as prefix in module BHM naming scheme.
+            - name: Get manifest namespace
+              id: namespace
+              uses: notiz-dev/github-action-json-property@release
+              with: 
+                path: 'src/manifest.json'
+                prop_path: 'namespace'
+
+            - name: Create Changelog
+              id: changelog
+              uses: TriPSs/conventional-changelog-action@v3.15.0
+              with:
+                skip-commit: 'true'
+                output-file: 'false'
+                skip-version-file: 'true'
+                
+            - name: Create Pre-Release
+              uses: svenstaro/upload-release-action@2.3.0
+              if: ${{ steps.changelog.outputs.skipped == 'false' }}
+              with:
+                repo_token: ${{ github.token }}
+                # Using 'file_glob' disables 'asset_name' renaming.
+                # We use the *.csproj name to workaround this.
+                file_glob: 'false'
+                file: src/bin/Release/${{ steps.csproj.outputs.name }}.bhm
+                # Rename the module BHM to release naming scheme.
+                asset_name: '${{ steps.namespace.outputs.prop }}-${{ steps.gitversion.outputs.fullSemVer }}.bhm'
+                overwrite: true
+                tag: v${{ steps.gitversion.outputs.fullSemVer }}
+                prerelease: true
+                body: ${{ steps.changelog.outputs.clean_changelog }}

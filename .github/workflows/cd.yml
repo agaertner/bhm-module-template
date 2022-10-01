@@ -1,23 +1,26 @@
 name: Deployment
 
-on:
-  push:
+on: 
+  pull_request:
     branches:
       - main
+    paths:
+      - 'src/**/*'
     tags-ignore:
       - v*
-      
+    types: [closed]
+
 env:
   GITHUB_TOKEN: ${{ github.token }}
 
 concurrency:
   group: versioned-release
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
     build-release:
         name: Build Release
-        if: ${{ !startsWith(github.ref, 'refs/tags/') }}
+        if: ${{ github.event.pull_request.merged && !startsWith(github.ref, 'refs/tags/') }}
         runs-on: windows-latest
         steps:
             - name: Install MSBuild Tools
@@ -28,22 +31,13 @@ jobs:
               with:
                 nuget-api-key: ${{ secrets.NuGetAPIKey }}
                 nuget-version: '5.x'
-
+                
             - name: Checkout
               uses: actions/checkout@v3.0.2
               with:
                 submodules: 'true'
                 fetch-depth: 0
-
-            # 'msbuild restore' does not support NuGet package.config format
-            - name: Run NuGet restore
-              working-directory: ./src
-              run: nuget restore
-            
-            - name: Run msbuild
-              working-directory: ./src
-              run: msbuild -p:Configuration=Release -p:VERSIONED_BUILD=${{ steps.gitversion.outputs.semVer }}
-
+             
             # Required to find output module BHM without glob pattern.
             - name: Get module *.csproj name
               id: csproj
@@ -58,16 +52,33 @@ jobs:
                 path: 'src/manifest.json'
                 prop_path: 'namespace'
 
-            # Used as suffix in module BHM naming scheme.
             - name: Get manifest version
               id: version
               uses: notiz-dev/github-action-json-property@release
-              with:
+              with: 
                 path: 'src/manifest.json'
                 prop_path: 'version'
                 
-            - name: Upload BHM to GitHub release
+            # 'msbuild restore' does not support NuGet package.config format
+            - name: Restore NuGet packages
+              working-directory: ./src
+              run: nuget restore
+            
+            - name: Build Solution
+              working-directory: ./src
+              run: msbuild -p:Configuration=Release -p:VERSIONED_BUILD=${{ steps.version.outputs.prop }}
+
+            - name: Create Changelog
+              id: changelog
+              uses: TriPSs/conventional-changelog-action@v3.15.0
+              with:
+                skip-commit: 'true'
+                output-file: 'false'
+                skip-version-file: 'true'
+                
+            - name: Create Release
               uses: svenstaro/upload-release-action@2.3.0
+              if: ${{ steps.changelog.outputs.skipped == 'false' }}
               with:
                 repo_token: ${{ github.token }}
                 # Using 'file_glob' disables 'asset_name' renaming.
@@ -79,4 +90,4 @@ jobs:
                 overwrite: true
                 tag: v${{ steps.version.outputs.prop }}
                 prerelease: false
-                body: ""
+                body: ${{ steps.changelog.outputs.clean_changelog }}
