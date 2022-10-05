@@ -80,9 +80,9 @@ jobs:
                 result-encoding: string
                 script: |
                     const commits = JSON.parse(process.env.COMMITS);
-                    var lines = "## What’s Changed<br><br>";
+                    var lines = "## What’s Changed\n\n";
                     for (const commit of commits) {
-                      lines += commit.message + " (" + commit.id + ") @" + commit.author.username + "<br>"
+                      lines += commit.message + " (" + commit.id + ") @" + commit.author.username + "\n"
                     }
                     return lines
                 
