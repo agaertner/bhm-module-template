@@ -55,9 +55,10 @@ jobs:
               with:
                 file: src/manifest.json
                 field: version
-                value: ${{ steps.gitversion.outputs.fullSemVer }}
+                value: ${{ steps.gitversion.outputs.majorMinorPatch }}
 
             - name: Commit version changes
+              shell: pwsh
               run: |
                 git config --local user.email "action@github.com"
                 git config --local user.name "GitHub Action"
@@ -78,12 +79,14 @@ jobs:
             
             - name: Build Solution
               working-directory: ./src
+              shell: pwsh
               run: msbuild -p:Configuration=Release -p:VERSIONED_BUILD=${{ steps.gitversion.outputs.semVer }}
 
             # Required to find output module BHM without glob pattern.
             - name: Get module *.csproj name
               id: csproj
               working-directory: ./src
+              shell: pwsh
               run: Write-Output "::set-output name=name::$((Get-ChildItem $dir -File '*.csproj').Basename)"
             
             # Used as prefix in module BHM naming scheme.
@@ -96,15 +99,20 @@ jobs:
 
             - name: Create Changelog
               id: changelog
-              uses: TriPSs/conventional-changelog-action@v3.15.0
+              uses: actions/github-script@v6.3.1
+              env:
+                COMMITS: ${{ toJSON(github.event.commits) }}
               with:
-                skip-commit: 'true'
-                output-file: 'false'
-                skip-version-file: 'true'
+                script: |
+                    const commits = JSON.parse(process.env.COMMITS);
+                    var lines = "## What’s Changed<br><br>";
+                    for (const commit of commits) {
+                      lines += commit.message + " (" + commit.id + ") @" + commit.author.username + "<br>"
+                    }
+                    return lines
                 
             - name: Create Pre-Release
               uses: svenstaro/upload-release-action@2.3.0
-              if: ${{ steps.changelog.outputs.skipped == 'false' }}
               with:
                 repo_token: ${{ github.token }}
                 # Using 'file_glob' disables 'asset_name' renaming.
@@ -116,4 +124,4 @@ jobs:
                 overwrite: true
                 tag: v${{ steps.gitversion.outputs.fullSemVer }}
                 prerelease: true
-                body: ${{ steps.changelog.outputs.clean_changelog }}
+                body: ${{ steps.changelog.outputs.result }}
