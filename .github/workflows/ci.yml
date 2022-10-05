@@ -80,7 +80,7 @@ jobs:
             - name: Build Solution
               working-directory: ./src
               shell: pwsh
-              run: msbuild -p:Configuration=Release -p:VERSIONED_BUILD=${{ steps.gitversion.outputs.semVer }}
+              run: msbuild -p:Configuration=Debug -p:VERSIONED_BUILD=${{ steps.gitversion.outputs.semVer }}
 
             # Required to find output module BHM without glob pattern.
             - name: Get module *.csproj name
@@ -103,11 +103,12 @@ jobs:
               env:
                 COMMITS: ${{ toJSON(github.event.commits) }}
               with:
+                result-encoding: string
                 script: |
                     const commits = JSON.parse(process.env.COMMITS);
                     var lines = "## What’s Changed<br><br>";
                     for (const commit of commits) {
-                      lines += commit.message + " (" + commit.id + ") @" + commit.author.username + "<br>"
+                      lines += "- " + commit.message + " (" + commit.id + ") @" + commit.author.username + "<br>"
                     }
                     return lines
                 
@@ -118,7 +119,7 @@ jobs:
                 # Using 'file_glob' disables 'asset_name' renaming.
                 # We use the *.csproj name to workaround this.
                 file_glob: 'false'
-                file: src/bin/Release/${{ steps.csproj.outputs.name }}.bhm
+                file: src/bin/Debug/${{ steps.csproj.outputs.name }}.bhm
                 # Rename the module BHM to release naming scheme.
                 asset_name: '${{ steps.namespace.outputs.prop }}-${{ steps.gitversion.outputs.fullSemVer }}.bhm'
                 overwrite: true
