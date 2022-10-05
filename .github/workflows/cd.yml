@@ -71,11 +71,17 @@ jobs:
               shell: pwsh
               run: msbuild -p:Configuration=Release -p:VERSIONED_BUILD=${{ steps.version.outputs.prop }}
 
+            - name: Get PR Commits
+              id: 'get-pr-commits'
+              uses: tim-actions/get-pr-commits@v1.2.0
+              with:
+                token: ${{ github.token }}
+                
             - name: Create Changelog
               id: changelog
               uses: actions/github-script@v6.3.1
               env:
-                COMMITS: ${{ toJSON(github.event.commits) }}
+                COMMITS: ${{ steps.get-pr-commits.outputs.commits }}
               with:
                 result-encoding: string
                 script: |
