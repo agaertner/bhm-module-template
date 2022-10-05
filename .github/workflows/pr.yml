@@ -4,8 +4,6 @@ on:
   pull_request:
     paths:
       - 'src/**/*'
-    tags-ignore:
-      - v*
 
 concurrency:
   group: test-pr-${{ github.head_ref }}
