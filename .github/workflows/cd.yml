@@ -6,6 +6,16 @@ on:
       - main
     paths:
       - 'src/**/*'
+      - 'submodules/**/*'
+    tags-ignore:
+      - v*
+    types: [closed]
+  pull_request_target:
+    branches:
+      - main
+    paths:
+      - 'src/**/*'
+      - 'submodules/**/*'
     tags-ignore:
       - v*
     types: [closed]
@@ -33,7 +43,7 @@ jobs:
                 nuget-version: '5.x'
                 
             - name: Checkout
-              uses: actions/checkout@v3.0.2
+              uses: actions/checkout@v3.3.0
               with:
                 submodules: 'true'
                 fetch-depth: 0
@@ -43,19 +53,19 @@ jobs:
               id: csproj
               working-directory: ./src
               shell: pwsh
-              run: Write-Output "::set-output name=name::$((Get-ChildItem $dir -File '*.csproj').Basename)"
+              run: Write-Output "name::$((Get-ChildItem $dir -File '*.csproj').Basename)" >> $GITHUB_OUTPUT
             
             # Used as prefix in module BHM naming scheme.
             - name: Get manifest namespace
               id: namespace
-              uses: notiz-dev/github-action-json-property@release
+              uses: notiz-dev/github-action-json-property@master
               with: 
                 path: 'src/manifest.json'
                 prop_path: 'namespace'
 
             - name: Get manifest version
               id: version
-              uses: notiz-dev/github-action-json-property@release
+              uses: notiz-dev/github-action-json-property@master
               with: 
                 path: 'src/manifest.json'
                 prop_path: 'version'
@@ -70,40 +80,24 @@ jobs:
               working-directory: ./src
               shell: pwsh
               run: msbuild -p:Configuration=Release -p:VERSIONED_BUILD=${{ steps.version.outputs.prop }}
-
-            - name: Get PR Commits
-              id: 'get-pr-commits'
-              uses: tim-actions/get-pr-commits@v1.2.0
-              with:
-                token: ${{ github.token }}
                 
-            - name: Create Changelog
-              id: changelog
-              uses: actions/github-script@v6.3.1
-              env:
-                COMMITS: ${{ steps.get-pr-commits.outputs.commits }}
+            - name: Create Release Draft
+              id: release-drafter
+              uses: release-drafter/release-drafter@v5
               with:
-                result-encoding: string
-                script: |
-                    const commits = JSON.parse(process.env.COMMITS);
-                    var lines = "## What’s Changed\n\n";
-                    for (const commit of commits) {
-                      lines += commit.commit.message + " (" + commit.sha + ") @" + commit.author.login + "\n"
-                    }
-                    return lines
+                version: ${{ steps.version.outputs.prop }}
+                tag: 'v${{ steps.version.outputs.prop }}'
+                # (Optional) specify config name to use, relative to .github/. Default: release-drafter.yml
+                # with:
+                #   config-name: my-config.yml
+                #   disable-autolabeler: true
                 
-            - name: Create Release
-              uses: svenstaro/upload-release-action@2.3.0
+            - name: Upload Module to Draft
+              uses: shogo82148/actions-upload-release-asset@v1
               with:
-                repo_token: ${{ github.token }}
-                # Using 'file_glob' disables 'asset_name' renaming.
-                # We use the *.csproj name to workaround this.
-                file_glob: 'false'
-                file: src/bin/Release/${{ steps.csproj.outputs.name }}.bhm
+                upload_url: ${{ steps.release-drafter.outputs.upload_url }}
+                asset_path: src/bin/Release/${{ steps.csproj.outputs.name }}.bhm
                 # Rename the module BHM to release naming scheme.
                 asset_name: '${{ steps.namespace.outputs.prop }}-${{ steps.version.outputs.prop }}.bhm'
+                asset_content_type: 'application/zip'
                 overwrite: true
-                tag: v${{ steps.version.outputs.prop }}
-                prerelease: false
-                release_name: 'v${{ steps.version.outputs.prop }}'
-                body: ${{ steps.changelog.outputs.result }}

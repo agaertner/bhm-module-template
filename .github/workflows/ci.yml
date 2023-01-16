@@ -6,6 +6,7 @@ on:
       - dev
     paths:
       - 'src/**/*'
+      - 'submodules/**/*'
     tags-ignore:
       - v*
 
@@ -13,45 +14,55 @@ env:
   GITHUB_TOKEN: ${{ github.token }}
 
 concurrency:
-  group: versioned-release
+  group: version-bump
   cancel-in-progress: true
 
 jobs:
     build-prerelease:
-        name: Bump Version / Build Pre-Release
-        if: ${{ !startsWith(github.ref, 'refs/tags/') }}
+        name: Bump Version / Create Pull Request
+        if: ${{ !startsWith(github.ref, 'refs/tags/') }} && github.event_name != 'pull_request'
         runs-on: windows-latest
         steps:
             - name: Install GitVersion
               uses: gittools/actions/gitversion/setup@v0.9.7
               with:
                 versionSpec: '5.x'
-
-            - name: Install MSBuild Tools
-              uses: microsoft/setup-msbuild@v1.1
-              
-            - name: Install NuGet
-              uses: nuget/setup-nuget@v1
-              with:
-                nuget-api-key: ${{ secrets.NuGetAPIKey }}
-                nuget-version: '5.x'
                 
-            - name: Checkout
-              uses: actions/checkout@v3.0.2
+            - name: Checkout 'dev'
+              uses: actions/checkout@v3.3.0
               with:
-                submodules: 'true'
+                submodules: 'false'
                 fetch-depth: 0
-
+                
+            - name: Verify or Create new branch 'actions/version-bump'
+              continue-on-error: true
+              run: 
+                git checkout -b actions/version-bump origin/dev
+                git push
+                
+            - name: Checkout 'actions/version-bump'
+              uses: actions/checkout@v3.3.0
+              with:
+                ref: actions/version-bump
+                submodules: 'false'
+                fetch-depth: 0
+                
+            - name: Fetch and Reset to latest 'dev'
+              run: |
+                git fetch origin dev
+                git reset --hard origin/dev
+                git restore --source origin/dev -- src/manifest.json
+                
             - name: Bump version in AssemblyInfo.cs
               id: gitversion
-              uses: gittools/actions/gitversion/execute@v0.9.7
+              uses: gittools/actions/gitversion/execute@v0.9.15
               with:
                 useConfigFile: true
                 updateAssemblyInfo: true
                 updateAssemblyInfoFilename: src/Properties/AssemblyInfo.cs
 
             - name: Bump version in manifest.json
-              uses: jossef/action-set-json-field@v2
+              uses: jossef/action-set-json-field@v2.1
               with:
                 file: src/manifest.json
                 field: version
@@ -69,60 +80,16 @@ jobs:
               uses: ad-m/github-push-action@v0.6.0
               with:
                 github_token: ${{ github.token }}
-                branch: ${{ github.ref }}
+                branch: actions/version-bump
                 tags: ${{ env.REPO }}:latest,${{ env.REPO }}:v${{ steps.gitversion.outputs.fullSemVer }}
+                force: true
                 
-            # 'msbuild restore' does not support NuGet package.config format
-            - name: Restore NuGet packages
-              working-directory: ./src
-              run: nuget restore
-            
-            - name: Build Solution
-              working-directory: ./src
-              shell: pwsh
-              run: msbuild -p:Configuration=Debug -p:VERSIONED_BUILD=${{ steps.gitversion.outputs.semVer }}
-
-            # Required to find output module BHM without glob pattern.
-            - name: Get module *.csproj name
-              id: csproj
-              working-directory: ./src
-              shell: pwsh
-              run: Write-Output "::set-output name=name::$((Get-ChildItem $dir -File '*.csproj').Basename)"
-            
-            # Used as prefix in module BHM naming scheme.
-            - name: Get manifest namespace
-              id: namespace
-              uses: notiz-dev/github-action-json-property@release
-              with: 
-                path: 'src/manifest.json'
-                prop_path: 'namespace'
-
-            - name: Create Changelog
-              id: changelog
-              uses: actions/github-script@v6.3.1
-              env:
-                COMMITS: ${{ toJSON(github.event.commits) }}
+            - name: Update or Create PR 'dev ← actions/version-bump'
+              uses: peter-evans/create-pull-request@v5-beta
               with:
-                result-encoding: string
-                script: |
-                    const commits = JSON.parse(process.env.COMMITS);
-                    var lines = "## What’s Changed\n\n";
-                    for (const commit of commits) {
-                      lines += "- " + commit.message + " (" + commit.id + ") @" + commit.author.username + "\n"
-                    }
-                    return lines
-                
-            - name: Create Pre-Release
-              uses: svenstaro/upload-release-action@2.3.0
-              with:
-                repo_token: ${{ github.token }}
-                # Using 'file_glob' disables 'asset_name' renaming.
-                # We use the *.csproj name to workaround this.
-                file_glob: 'false'
-                file: src/bin/Debug/${{ steps.csproj.outputs.name }}.bhm
-                # Rename the module BHM to release naming scheme.
-                asset_name: '${{ steps.namespace.outputs.prop }}-${{ steps.gitversion.outputs.fullSemVer }}.bhm'
-                overwrite: true
-                tag: v${{ steps.gitversion.outputs.fullSemVer }}
-                prerelease: true
-                body: ${{ steps.changelog.outputs.result }}
+                branch: actions/version-bump
+                base: dev
+                title: "🔖 Bump Version"
+                body: "Automated version bump by GitHub action."
+                labels: Version Bump
+              
