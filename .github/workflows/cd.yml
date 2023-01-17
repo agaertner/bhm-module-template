@@ -41,20 +41,21 @@ jobs:
              
             # Required to find output module BHM without glob pattern.
             - name: Get module *.csproj name
+              id: get_csproj
               working-directory: ./src
               shell: pwsh
-              run: Write-Output "csproj_name::$((Get-ChildItem $dir -File '*.csproj').Basename)" >> $GITHUB_OUTPUT
+              run: echo "name=$((Get-ChildItem $dir -File '*.csproj').Basename)" >> $env:GITHUB_OUTPUT
             
             # Used as prefix in module BHM naming scheme.
             - name: Get manifest namespace
-              id: namespace
+              id: get_namespace
               uses: notiz-dev/github-action-json-property@master
               with: 
                 path: 'src/manifest.json'
                 prop_path: 'namespace'
 
             - name: Get manifest version
-              id: version
+              id: get_version
               uses: notiz-dev/github-action-json-property@master
               with: 
                 path: 'src/manifest.json'
@@ -69,14 +70,14 @@ jobs:
             - name: Build Solution
               working-directory: ./src
               shell: pwsh
-              run: msbuild -p:Configuration=Release -p:VERSIONED_BUILD=${{ steps.version.outputs.prop }}
+              run: msbuild -p:Configuration=Release -p:VERSIONED_BUILD=${{ steps.get_version.outputs.prop }}
                 
             - name: Create Release Draft
               id: release-drafter
               uses: release-drafter/release-drafter@v5
               with:
-                version: ${{ steps.version.outputs.prop }}
-                tag: 'v${{ steps.version.outputs.prop }}'
+                version: ${{ steps.get_version.outputs.prop }}
+                tag: 'v${{ steps.get_version.outputs.prop }}'
                 # (Optional) specify config name to use, relative to .github/. Default: release-drafter.yml
                 # with:
                 #   config-name: my-config.yml
@@ -86,8 +87,8 @@ jobs:
               uses: shogo82148/actions-upload-release-asset@v1
               with:
                 upload_url: ${{ steps.release-drafter.outputs.upload_url }}
-                asset_path: src/bin/Release/${{ env.csproj_name }}.bhm
+                asset_path: src/bin/Release/${{ steps.get_csproj.outputs.name }}.bhm
                 # Rename the module BHM to release naming scheme.
-                asset_name: '${{ steps.namespace.outputs.prop }}-${{ steps.version.outputs.prop }}.bhm'
+                asset_name: '${{ steps.get_namespace.outputs.prop }}-${{ steps.get_version.outputs.prop }}.bhm'
                 asset_content_type: 'application/zip'
                 overwrite: true

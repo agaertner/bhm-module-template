@@ -32,13 +32,14 @@ jobs:
 
             # Required to find output module BHM without glob pattern.
             - name: Get module *.csproj name
+              id: get_csproj
               working-directory: ./src
               shell: pwsh
-              run: Write-Output "csproj_name::$((Get-ChildItem $dir -File '*.csproj').Basename)" >> $GITHUB_OUTPUT
+              run: echo "name=$((Get-ChildItem $dir -File '*.csproj').Basename)" >> $env:GITHUB_OUTPUT
             
             # Used as prefix in module BHM naming scheme.
             - name: Get manifest namespace
-              id: namespace
+              id: get_namespace
               uses: notiz-dev/github-action-json-property@release
               with: 
                 path: 'src/manifest.json'
@@ -46,7 +47,7 @@ jobs:
                 
             # Used as suffix in module BHM naming scheme.
             - name: Get manifest version
-              id: version
+              id: get_version
               uses: notiz-dev/github-action-json-property@v0.2.0
               with:
                 path: 'src/manifest.json'
@@ -61,10 +62,10 @@ jobs:
             - name: Build Solution
               working-directory: ./src
               shell: pwsh
-              run: msbuild -p:Configuration=Debug -p:VERSIONED_BUILD=${{ steps.version.outputs.prop }}
+              run: msbuild -p:Configuration=Debug -p:VERSIONED_BUILD=${{ steps.get_version.outputs.prop }}
                 
             - name: Upload BHM artifact
               uses: actions/upload-artifact@v3.1.0
               with:
-                name: '${{ steps.namespace.outputs.prop }}-${{ steps.version.outputs.prop }}-pr.${{ github.event.number }}.bhm'
-                path: src/bin/Debug/${{ env.csproj_name }}.bhm
+                name: '${{ steps.get_namespace.outputs.prop }}-${{ steps.get_version.outputs.prop }}-pr.${{ github.event.number }}.bhm'
+                path: src/bin/Debug/${{ steps.get_csproj.outputs.name }}.bhm
