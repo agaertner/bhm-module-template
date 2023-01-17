@@ -12,7 +12,7 @@ on:
 
 env:
   GITHUB_TOKEN: ${{ github.token }}
-
+  
 concurrency:
   group: version-bump
   cancel-in-progress: true
@@ -20,7 +20,7 @@ concurrency:
 jobs:
     build-prerelease:
         name: Bump Version / Create Pull Request
-        if: ${{ !startsWith(github.ref, 'refs/tags/') }} && github.event_name != 'pull_request'
+        if: ${{ !startsWith(github.ref, 'refs/tags/') }}
         runs-on: windows-latest
         steps:
             - name: Install GitVersion
@@ -33,12 +33,15 @@ jobs:
               with:
                 submodules: 'false'
                 fetch-depth: 0
-                
-            - name: Verify or Create new branch 'actions/version-bump'
+
+            - name: (Re-)create branch 'actions/version-bump'
               continue-on-error: true
-              run: 
-                git checkout -b actions/version-bump origin/dev
-                git push
+              run: |
+                git push origin --delete actions/version-bump
+                git branch --delete --remotes origin/actions/version-bump
+                git fetch origin --prune
+                git checkout -b actions/version-bump
+                git push --set-upstream origin actions/version-bump
                 
             - name: Checkout 'actions/version-bump'
               uses: actions/checkout@v3.3.0
@@ -46,12 +49,6 @@ jobs:
                 ref: actions/version-bump
                 submodules: 'false'
                 fetch-depth: 0
-                
-            - name: Fetch and Reset to latest 'dev'
-              run: |
-                git fetch origin dev
-                git reset --hard origin/dev
-                git restore --source origin/dev -- src/manifest.json
                 
             - name: Bump version in AssemblyInfo.cs
               id: gitversion
@@ -89,7 +86,7 @@ jobs:
               with:
                 branch: actions/version-bump
                 base: dev
-                title: "🔖 Bump Version"
-                body: "Automated version bump by GitHub action."
+                title: "🤖 Version Bump"
+                body: "Automated version bump to v${{ steps.gitversion.outputs.fullSemVer }}"
                 labels: Version Bump
               

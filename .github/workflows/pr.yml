@@ -5,10 +5,6 @@ on:
     paths:
       - 'src/**/*'
       - 'submodules/**/*'
-  pull_request_target:
-    paths:
-      - 'src/**/*'
-      - 'submodules/**/*'
 
 concurrency:
   group: test-pr-${{ github.head_ref }}
@@ -36,10 +32,9 @@ jobs:
 
             # Required to find output module BHM without glob pattern.
             - name: Get module *.csproj name
-              id: csproj
               working-directory: ./src
               shell: pwsh
-              run: Write-Output "name::$((Get-ChildItem $dir -File '*.csproj').Basename)" >> $GITHUB_OUTPUT
+              run: Write-Output "csproj_name::$((Get-ChildItem $dir -File '*.csproj').Basename)" >> $GITHUB_OUTPUT
             
             # Used as prefix in module BHM naming scheme.
             - name: Get manifest namespace
@@ -72,4 +67,4 @@ jobs:
               uses: actions/upload-artifact@v3.1.0
               with:
                 name: '${{ steps.namespace.outputs.prop }}-${{ steps.version.outputs.prop }}-pr.${{ github.event.number }}.bhm'
-                path: src/bin/Debug/${{ steps.csproj.outputs.name }}.bhm
+                path: src/bin/Debug/${{ env.csproj_name }}.bhm
