@@ -39,6 +39,7 @@
     </Reference>
     <Reference Include="Blish HUD, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>packages\BlishHUD.1.0.0\lib\net472\Blish HUD.exe</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="Gapotchenko.FX, Version=2021.1.5.4096, Culture=neutral, PublicKeyToken=a750ee378eaf756f, processorArchitecture=MSIL">
       <HintPath>packages\Gapotchenko.FX.2021.1.5\lib\net472\Gapotchenko.FX.dll</HintPath>
@@ -54,6 +55,7 @@
     </Reference>
     <Reference Include="Gw2Sharp, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>packages\Gw2Sharp.1.7.3\lib\netstandard2.0\Gw2Sharp.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="Microsoft.Bcl.AsyncInterfaces, Version=5.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
       <HintPath>packages\Microsoft.Bcl.AsyncInterfaces.5.0.0\lib\net461\Microsoft.Bcl.AsyncInterfaces.dll</HintPath>
@@ -201,6 +203,7 @@
     <Reference Include="System.ServiceModel" />
     <Reference Include="System.ServiceModel.Primitives, Version=4.9.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>packages\System.ServiceModel.Primitives.4.9.0\lib\net461\System.ServiceModel.Primitives.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="System.Text.Encodings.Web, Version=5.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
       <HintPath>packages\System.Text.Encodings.Web.5.0.0\lib\net461\System.Text.Encodings.Web.dll</HintPath>
