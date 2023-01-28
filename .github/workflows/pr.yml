@@ -67,5 +67,7 @@ jobs:
             - name: Upload BHM artifact
               uses: actions/upload-artifact@v3.1.0
               with:
-                name: '${{ steps.get_namespace.outputs.prop }}-${{ steps.get_version.outputs.prop }}-pr.${{ github.event.number }}.bhm'
-                path: src/bin/Debug/${{ steps.get_csproj.outputs.name }}.bhm
+                name: '${{ steps.get_namespace.outputs.prop }}-${{ steps.get_version.outputs.prop }}-pr.${{ github.event.number }}'
+                path: |
+                  src/bin/Debug/
+                  !src/bin/Debug/${{ steps.get_csproj.outputs.name }}.bhm
