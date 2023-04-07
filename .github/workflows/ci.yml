@@ -7,8 +7,6 @@ on:
     paths:
       - 'src/**/*'
       - 'submodules/**/*'
-    tags-ignore:
-      - v*
 
 env:
   GITHUB_TOKEN: ${{ github.token }}
@@ -20,8 +18,9 @@ concurrency:
 jobs:
     build-prerelease:
         name: Bump Version / Create Pull Request
-        if: ${{ !startsWith(github.ref, 'refs/tags/') }}
         runs-on: windows-latest
+        # Only run on pushes directly to dev. Ignore pushes to PRs
+        if: ${{ github.ref == 'refs/heads/dev' && !github.event.pull_request && !startsWith(github.ref, 'refs/tags/') }}
         steps:
             - name: Install GitVersion
               uses: gittools/actions/gitversion/setup@v0.9.7
