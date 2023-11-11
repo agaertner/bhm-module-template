@@ -28,7 +28,7 @@ jobs:
                 versionSpec: '5.x'
                 
             - name: Checkout 'dev'
-              uses: actions/checkout@v3.5.3
+              uses: actions/checkout@v4.1.1
               with:
                 submodules: 'false'
                 fetch-depth: 0
@@ -43,7 +43,7 @@ jobs:
                 git push --set-upstream origin actions/version-bump
                 
             - name: Checkout 'actions/version-bump'
-              uses: actions/checkout@v3.5.3
+              uses: actions/checkout@v4.1.1
               with:
                 ref: actions/version-bump
                 submodules: 'false'
@@ -73,7 +73,7 @@ jobs:
                 git commit -m "(skip): 🔖 bump version to ${{ steps.gitversion.outputs.fullSemVer }}"
                 
             - name: Push version changes
-              uses: ad-m/github-push-action@v0.6.0
+              uses: ad-m/github-push-action@v0.8.0
               with:
                 github_token: ${{ github.token }}
                 branch: actions/version-bump
