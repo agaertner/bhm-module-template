@@ -48,14 +48,14 @@ jobs:
             # Used as prefix in module BHM naming scheme.
             - name: Get manifest namespace
               id: get_namespace
-              uses: Koekieezz/github-action-json-property@master
+              uses: notiz-dev/github-action-json-property@v0.2.0
               with: 
                 path: 'src/manifest.json'
                 prop_path: 'namespace'
 
             - name: Get manifest version
               id: get_version
-              uses: Koekieezz/github-action-json-property@master
+              uses: notiz-dev/github-action-json-property@v0.2.0
               with: 
                 path: 'src/manifest.json'
                 prop_path: 'version'

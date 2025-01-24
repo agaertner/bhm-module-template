@@ -58,7 +58,7 @@ jobs:
             # Used as suffix in module BHM naming scheme.
             - name: Get manifest version
               id: get_version
-              uses: Koekieezz/github-action-json-property@master
+              uses: notiz-dev/github-action-json-property@v0.2.0
               with:
                 path: 'src/manifest.json'
                 prop_path: 'version'
